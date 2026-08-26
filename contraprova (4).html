@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contraprova · Diagnóstico de fluxos agentes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1014; --surface:#14181f; --surface2:#1b2029; --line:#262d38;
+  --ink:#e9e7df; --muted:#8b95a3; --faint:#5a6472;
+  --machine:#4fe3c6; --human:#ffb454;
+  --machine-dim:rgba(79,227,198,.13); --human-dim:rgba(255,180,84,.13);
+  --machine-line:rgba(79,227,198,.45); --human-line:rgba(255,180,84,.45);
+  --display:"Space Grotesk","Helvetica Neue",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --body:system-ui,"Segoe UI",Roboto,sans-serif;
+  --maxw:900px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--body);
+  font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  background-image:
+    linear-gradient(180deg, rgba(79,227,198,.03), transparent 220px),
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,.014) 40px);
+  transition:background-color .5s ease;
+}
+body.p2{
+  --bg:#0b0a12;
+  background-image:
+    linear-gradient(180deg, rgba(120,132,235,.05), transparent 260px),
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,.013) 40px);
+}
+a{color:var(--machine)}
+button{font-family:inherit}
+
+/* header / vitals */
+.top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#20262f,#191e26);border-bottom:1px solid #333c49;box-shadow:0 8px 24px -14px rgba(0,0,0,.75)}
+.top-inner{max-width:var(--maxw);margin:0 auto;padding:26px 22px;min-height:112px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:15px;min-width:0}
+.brand .mark{width:44px;height:44px;flex:none;display:grid;place-items:center;border:1px solid var(--machine-line);border-radius:11px;background:var(--machine-dim)}
+.brand .wm{display:flex;flex-direction:column;gap:6px;min-width:0;line-height:1}
+.brand .t{font-family:var(--display);font-weight:700;font-size:27px;letter-spacing:-.02em;color:var(--ink);line-height:1}
+.brand .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;line-height:1}
+.track{display:flex;align-items:flex-end;gap:10px;margin-left:auto}
+.demo-quick{border:1px solid var(--machine-line);background:var(--machine-dim);color:var(--machine);border-radius:8px;padding:8px 11px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.demo-quick:hover{background:rgba(79,227,198,.2)}
+.seg{display:flex;flex-direction:column;gap:6px;width:66px}
+.seg .bar{height:3px;border-radius:2px;background:#333c49;overflow:hidden}
+.seg .bar i{display:block;height:100%;width:0;background:var(--machine);transition:width .4s ease}
+.seg .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);white-space:nowrap;line-height:1}
+.seg.done .lab{color:var(--muted)}
+.seg.active .lab{color:var(--ink)}
+@media(max-width:700px){
+  .top-inner{min-height:auto;padding:16px 18px;gap:14px}
+  .brand{gap:12px}
+  .brand .mark{width:40px;height:40px}
+  .brand .t{font-size:23px}
+  .track{width:100%;margin-left:0;gap:6px}
+  .seg{flex:1;width:auto}
+  .seg .lab{display:none}
+  .seg.active .lab{display:block;font-size:10px;letter-spacing:.04em}
+}
+
+/* stage */
+.stage{max-width:var(--maxw);margin:0 auto;padding:40px 22px 120px}
+.screen{animation:rise .34s cubic-bezier(.2,.7,.2,1)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--machine);display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.eyebrow .num{color:var(--faint)}
+.eyebrow .rule{flex:1;height:1px;background:var(--line)}
+h1.q{font-family:var(--display);font-weight:600;font-size:clamp(24px,4.2vw,34px);line-height:1.15;letter-spacing:-.01em;margin:0 0 8px}
+.q-hint{color:var(--muted);font-size:14px;margin:0 0 26px;font-family:var(--mono);letter-spacing:.02em}
+.q-hint b{color:var(--ink);font-weight:600}
+
+/* flow anchor */
+.anchor{display:flex;align-items:center;gap:12px;margin-bottom:26px;padding:12px 15px;border:1px solid var(--line);border-left:2px solid var(--machine);border-radius:10px;background:var(--surface)}
+.anchor .dia{width:8px;height:8px;background:var(--machine);transform:rotate(45deg);border-radius:1px;flex:none}
+.anchor .anchor-box{display:flex;flex-direction:column;gap:4px;min-width:0}
+.anchor .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);line-height:1}
+.anchor .val{font-family:var(--display);font-weight:600;color:var(--ink);font-size:14.5px;line-height:1.2}
+.anchor .pos{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+body.p2 .anchor{border-left-color:#7c84eb}
+body.p2 .anchor .dia{background:#7c84eb}
+
+/* chips */
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.chip{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:15px 16px;color:var(--ink);cursor:pointer;transition:border-color .16s,background .16s,transform .06s;font-size:14.5px;line-height:1.35;display:flex;align-items:flex-start;gap:11px}
+.chip:hover{border-color:var(--faint)}
+.chip:active{transform:translateY(1px)}
+.chip .box{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--faint);flex:none;margin-top:1px;position:relative;transition:.16s}
+.chip.radio .box{border-radius:50%}
+.chip[aria-pressed="true"]{border-color:var(--machine-line);background:var(--machine-dim)}
+.chip[aria-pressed="true"] .box{border-color:var(--machine);background:var(--machine)}
+.chip[aria-pressed="true"] .box:after{content:"";position:absolute;inset:0;margin:auto;width:6px;height:6px;border-radius:2px;background:var(--bg)}
+.chip.radio[aria-pressed="true"] .box:after{border-radius:50%}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.chip:focus-visible{outline:2px solid var(--machine);outline-offset:2px}
+.chip.special{border-style:dashed;color:var(--muted)}
+.chip.special[aria-pressed="true"]{border-style:solid;color:var(--ink)}
+.specify{margin-top:12px}
+.specify-input{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:12px 14px;color:var(--ink);font-family:var(--body);font-size:14.5px}
+.specify-input:focus{outline:none;border-color:var(--machine-line);box-shadow:0 0 0 2px var(--machine-dim)}
+.specify-input::placeholder{color:var(--faint)}
+.grouplab{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:26px 0 12px}
+.grouplab:first-child{margin-top:0}
+
+.counter{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:14px;letter-spacing:.04em}
+.counter b{color:var(--machine)}
+.counter.max b{color:var(--human)}
+
+/* nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,16,20,.9);backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:20}
+.nav-inner{max-width:var(--maxw);margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:14px}
+.btn{border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:12px 22px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.01em;transition:.16s}
+.btn:hover{border-color:var(--faint)}
+.btn:focus-visible{outline:2px solid var(--machine);outline-offset:2px}
+.btn.ghost{background:transparent}
+.btn.primary{background:var(--machine);border-color:var(--machine);color:#06231d}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.primary:disabled{opacity:.35;cursor:not-allowed;filter:none}
+.nav .spacer{flex:1}
+.nav .status{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em}
+
+/* intro */
+.intro-lead{font-size:clamp(26px,4vw,38px);font-family:var(--display);font-weight:700;letter-spacing:-.015em;line-height:1.12;margin:0 0 18px;max-width:720px}
+.intro-body{max-width:640px;color:var(--muted);font-size:16px}
+.intro-body p{margin:0 0 16px}
+.stages{margin:34px 0 0;border-top:1px solid var(--line)}
+.stage-row{display:flex;gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}
+.stage-row .lab{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--machine);min-width:168px;flex:none;padding-top:2px}
+.stage-row .txt{color:var(--muted);font-size:14.5px;line-height:1.45}
+.intro-cta{margin-top:32px}
+.pick{display:flex;flex-direction:column;gap:7px;margin:2px 0 6px;padding:16px 18px;border:1px solid var(--line);border-left:2px solid #7c84eb;border-radius:11px;background:var(--surface)}
+.pick-lab{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.pick-val{font-family:var(--display);font-weight:700;font-size:clamp(19px,3vw,24px);color:var(--ink);letter-spacing:-.01em;line-height:1.15}
+@media(max-width:560px){.stage-row{flex-direction:column;gap:5px}.stage-row .lab{min-width:0}}
+
+/* opportunities */
+.opps{display:flex;flex-direction:column;gap:16px;margin-top:6px}
+.opp{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;transition:border-color .16s}
+.opp:hover{border-color:var(--faint)}
+.opp-head{display:flex;align-items:baseline;gap:14px;padding:20px 22px 6px}
+.opp-idx{font-family:var(--mono);font-size:12px;color:var(--machine);letter-spacing:.1em}
+.opp-title{font-family:var(--display);font-weight:600;font-size:20px;line-height:1.18}
+.opp-status{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.opp-status.done{color:var(--machine)}
+.opp-status.progress{color:var(--human)}
+.opp-body{padding:6px 22px 20px}
+.opp-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:14px 0 8px}
+.opp ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.opp ul li{padding-left:18px;position:relative;color:var(--muted);font-size:14px}
+.opp ul li:before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:1px;background:var(--machine-line)}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.04em;border:1px solid var(--line);border-radius:20px;padding:5px 11px;color:var(--muted)}
+.tag.empty{border-style:dashed;color:var(--human);border-color:var(--human-line)}
+.opp-foot{border-top:1px solid var(--line);padding:15px 22px;display:flex;justify-content:flex-end}
+
+/* dividers for multi-question screens */
+.qblock{margin-bottom:34px}
+
+/* FINAL */
+.final-head{margin-bottom:30px}
+.final-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--human);margin-bottom:12px}
+.final-title{font-family:var(--display);font-weight:700;font-size:clamp(26px,4.6vw,38px);letter-spacing:-.015em;line-height:1.12;margin:0}
+.sec{margin:38px 0}
+.sec-h{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--machine);display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sec-h .rule{flex:1;height:1px;background:var(--line)}
+.reading{border-left:2px solid var(--machine-line);padding:6px 0 6px 20px;color:var(--ink);font-size:16px;line-height:1.6;background:linear-gradient(90deg,var(--machine-dim),transparent 60%)}
+.assessment{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(0,2fr);gap:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:20px 22px}
+.assessment-verdict{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2;color:var(--ink)}
+.assessment-confidence{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--human);margin-top:9px}
+.assessment-notes{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+.assessment-notes li+li{margin-top:7px}
+.whylist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.whylist li{padding-left:20px;position:relative;color:var(--muted)}
+.whylist li:before{content:"";position:absolute;left:3px;top:9px;width:7px;height:7px;border-radius:1px;background:var(--machine)}
+
+/* components table */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;padding:0 14px 10px;border-bottom:1px solid var(--line)}
+.tbl td{padding:14px;border-bottom:1px solid var(--line);vertical-align:top}
+.crow{cursor:pointer;transition:background .15s}
+.crow:hover{background:var(--surface)}
+.crow.hot{background:var(--machine-dim)}
+.crow.hot.human{background:var(--human-dim)}
+.cname{font-family:var(--display);font-weight:600;font-size:14.5px;white-space:nowrap;display:flex;align-items:center;gap:9px}
+.pill{width:8px;height:8px;border-radius:2px;background:var(--machine);flex:none}
+.pill.human{background:var(--human)}
+.cfun{color:var(--muted)}
+.csrc{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px;line-height:1.5;display:none}
+.crow.hot .csrc{display:block;color:var(--muted)}
+.trace-hint{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:12px;letter-spacing:.03em}
+
+/* diagram */
+.diagram-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:24px;overflow:auto}
+.diagram-wrap .mermaid{display:flex;justify-content:center}
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.03em}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+.gap-note{border:1px dashed var(--human-line);border-radius:11px;padding:14px 16px;color:var(--human);font-size:13px;font-family:var(--mono);letter-spacing:.02em;background:var(--human-dim);margin-top:16px;line-height:1.55}
+
+.final-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:40px}
+
+@media(max-width:560px){
+  .top-inner{padding:14px 16px}
+  .stage{padding:26px 16px 116px}
+  .nav-inner{padding:11px 14px;gap:10px}
+  .btn{padding:11px 15px;font-size:13.5px}
+  .nav .status{font-size:10.5px}
+  .chips{grid-template-columns:1fr}
+  .cname{white-space:normal}
+  .opp-head{padding:18px 18px 6px;gap:10px}
+  .opp-body{padding:6px 18px 18px}
+  .opp-title{font-size:18px}
+  .opp-foot{padding:14px 18px}
+  .opp-foot .btn{width:100%}
+  .reading{font-size:15px;padding-left:16px}
+  .sec{margin:30px 0}
+  .tbl td{padding:12px 10px}
+  .tbl th{padding:0 10px 10px}
+  .diagram-wrap{padding:16px 12px}
+  .legend{gap:14px}
+  .specify-input{max-width:none}
+  .assessment{grid-template-columns:1fr}
+  .anchor{flex-wrap:wrap;gap:8px 10px}
+  .anchor .pos{margin-left:0;width:100%;padding-left:20px}
+}
+@media(max-width:420px){
+  .brand .mark{width:36px;height:36px}
+  .brand .t{font-size:20px}
+  .brand .k{font-size:9px;letter-spacing:.12em}
+  .btn{padding:10px 13px;font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <circle cx="12" cy="3.6" r="1.7" fill="#4fe3c6"/>
+          <path d="M12 5.3 V9.4" stroke="#4fe3c6" stroke-width="1.6" stroke-linecap="round"/>
+          <rect x="9" y="9.5" width="6" height="6" rx="1.3" transform="rotate(45 12 12.5)" stroke="#4fe3c6" stroke-width="1.6"/>
+          <path d="M12 15.7 L7.2 20.2" stroke="#4fe3c6" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M12 15.7 L16.8 20.2" stroke="#ffb454" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="7.2" cy="20.4" r="1.5" fill="#4fe3c6"/>
+          <circle cx="16.8" cy="20.4" r="1.5" fill="#ffb454"/>
+        </svg>
+      </span>
+      <span class="wm">
+        <span class="t">Contraprova</span>
+        <span class="k">Diagnóstico de fluxos agentes</span>
+      </span>
+    </div>
+    <button class="demo-quick" id="demoQuick" type="button">Demo guiada</button>
+    <div class="track" id="phases"></div>
+  </div>
+</header>
+
+<main class="stage"><div id="screen" class="screen"></div></main>
+
+<nav class="nav"><div class="nav-inner">
+  <button class="btn ghost" id="back">Voltar</button>
+  <div class="spacer"></div>
+  <span class="status" id="status"></span>
+  <button class="btn primary" id="next">Avançar</button>
+</div></nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+"use strict";
+
+/* ---------- data ---------- */
+const NATUREZA=["Produto físico","Produto ou serviço digital","Serviço executado por pessoas","Projeto ou solução customizada","Informação, análise ou recomendação","Plataforma ou infraestrutura","Transação ou intermediação","Conteúdo, educação ou capacitação"];
+const RESULTADOS=["Receita ou crescimento","Margem ou geração de caixa","Produtividade ou custo operacional","Tempo de ciclo ou prazo","Qualidade ou taxa de erro","Conversão ou vendas","Retenção ou satisfação do cliente","Risco ou conformidade"];
+const INFO=["Sistemas corporativos","Sistemas próprios","Planilhas","Documentos e arquivos","E-mail ou mensageria","Múltiplas fontes sem integração clara","Principalmente nas pessoas"];
+const CONHEC=["Principalmente na experiência das pessoas","Há documentos, mas estão dispersos ou desatualizados","Os processos principais e parte das regras estão documentados","Conhecimento e regras estão amplamente documentados e atualizados","Há fontes oficiais, governança e regras estruturadas"];
+const COMPLIANCE=["Pouco","Em parte","Muito","Não sei dizer"];
+
+const FLOWS={
+  atendimento:{label:"Atendimento e solicitações de clientes",title:"Triagem e resposta a solicitações",problems:["Volume alto de solicitações","Classificação ou priorização difícil","Encaminhamento incorreto","Tempo alto de resposta","Respostas inconsistentes","Dependência de pessoas específicas","SLA ou pendências pouco visíveis"]},
+  propostas:{label:"Propostas e oportunidades comerciais",title:"Preparação e acompanhamento de propostas comerciais",problems:["Preparação demorada","Informações comerciais dispersas","Condições comerciais inconsistentes","Aprovações demoradas","Follow-up irregular","Baixa visibilidade sobre estágio ou prioridade","Perda de oportunidade por atraso"]},
+  contratos:{label:"Contratos e aprovações",title:"Análise e aprovação de contratos",problems:["Análise demorada","Regras ou cláusulas difíceis de localizar","Dependência de especialistas","Aprovações demoradas","Exceções tratadas de forma inconsistente","Baixa rastreabilidade das decisões","Risco de compromisso fora da alçada"]},
+  onboarding:{label:"Onboarding e validação documental",title:"Onboarding e validação documental",problems:["Documentação incompleta","Conferência manual","Retrabalho para solicitar complementos","Dificuldade de validar elegibilidade","Tempo alto até ativação","Inconsistência cadastral","Dificuldade de tratar exceções"]},
+  pagamentos:{label:"Pagamentos, despesas e cobranças",title:"Conferência e aprovação de pagamentos e cobranças",problems:["Conferência manual","Divergências entre sistemas","Aprovações demoradas","Cobranças sem acompanhamento","Baixa visibilidade de pendências","Erros de lançamento ou classificação","Dificuldade de aplicar alçadas"]},
+  compras:{label:"Compras e fornecedores",title:"Cotação e aprovação de compras",problems:["Pesquisa manual de fornecedores","Comparação de propostas demorada","Cadastro e validação demorados","Aprovação de compra lenta","Dificuldade de aplicar políticas de compra","Baixa visibilidade de prazos e pendências","Dependência de comunicação por e-mail"]},
+  indicadores:{label:"Indicadores, relatórios e metas",title:"Consolidação de indicadores e identificação de desvios",problems:["Dados espalhados","Consolidação manual","Indicadores inconsistentes","Relatórios demorados","Atualização pouco frequente","Desvios percebidos tarde","Dificuldade de transformar dados em ação"]},
+  projetos:{label:"Projetos, entregas e prazos",title:"Acompanhamento de projetos e prazos",problems:["Baixa visibilidade de andamento","Pendências sem responsável claro","Atrasos percebidos tarde","Atualizações manuais de status","Dependência de reuniões para acompanhamento","Dificuldade de priorizar riscos","Comunicação fragmentada entre equipes"]},
+  compliance:{label:"Compliance, auditoria e riscos",title:"Coleta de evidências e identificação de desvios",problems:["Coleta manual de evidências","Regras dispersas","Dificuldade de identificar desvios","Tratamento inconsistente de exceções","Baixa rastreabilidade","Alertas tardios","Dependência de especialistas"]},
+  cadastros:{label:"Cadastros e atualização de sistemas",title:"Atualização e consistência de cadastros",problems:["Digitação repetitiva","Dados inconsistentes entre sistemas","Atualização manual após decisões","Erros de cadastro","Falta de validação automática","Retrabalho para correção","Baixa rastreabilidade das alterações"]},
+  internas:{label:"Solicitações internas entre áreas",title:"Triagem de solicitações internas",problems:["Solicitações chegam por canais diferentes","Dificuldade de classificar ou priorizar","Encaminhamento incorreto","Baixa visibilidade de responsável e prazo","Respostas repetitivas","Dependência de pessoas específicas","Pendências sem acompanhamento"]},
+  documentos:{label:"Produção e revisão de documentos",title:"Produção e revisão de documentos",problems:["Busca manual de informações","Uso de versões desatualizadas","Tempo alto de produção","Revisões repetitivas","Dificuldade de aplicar padrões e regras","Aprovações demoradas","Baixa rastreabilidade das fontes"]}
+};
+
+const FONTES=["ERP ou sistema corporativo","CRM","Sistema próprio","Planilhas","Documentos","E-mail ou mensageria","Base de conhecimento"];
+const HISTORICO=["Quase nenhum histórico","Menos de 1 ano","Entre 1 e 3 anos","Mais de 3 anos","Varia conforme a fonte"];
+const QUALIDADE=["Baixa","Média","Alta","Varia muito conforme a fonte"];
+const DECISAO=["Regras explícitas","Documentos e políticas","Dados históricos","Comparação com padrões","Experiência profissional","Julgamento contextual"];
+const IMPACTO=["Financeiro","Cliente","Operacional","Contratual","Compliance ou regulatório","Dados ou segurança","Reputação","Baixo impacto e facilmente reversível"];
+const AUTONOMIA=["Buscar e reunir informações","Classificar ou priorizar","Conferir regras e documentos","Produzir análise ou recomendação","Atualizar registros","Executar ações dentro de limites previamente definidos"];
+const HUMANO=["Exceção às regras","Valor ou impacto acima da alçada","Baixa confiança na análise","Compromisso contratual ou financeiro","Risco de compliance, dados ou segurança","Decisão difícil de reverter"];
+const AMBIENTE=["Microsoft","Google","AWS","Oracle","Salesforce","SAP","Sistemas próprios","Mix de vários ecossistemas"];
+const INTEGRACAO=["Equipe interna","Fornecedores","Ambos","Capacidade limitada"];
+const IA=["Uso individual de ferramentas","Ferramentas corporativas aprovadas","IA integrada a alguns processos","Modelos via API ou automações","Agentes executando tarefas","Múltiplos agentes ou orquestração"];
+
+/* ---------- state ---------- */
+const S={
+  phase:1, idx:0,
+  demo:false,
+  natureza:[], resultados:[], info:[], conhec:[], compliance:[],
+  fluxos:[], problems:{},        // problems[flowKey]=[...]
+  chosen:null,                   // fluxo atualmente aberto
+  analyses:{},                   // uma decupagem independente por fluxo
+  other:{}                       // respostas livres da etapa 1
+};
+
+const STORAGE_KEY="contraprova.portfolio.v4";
+const P2_KEYS=new Set(["fontes","historico","qualidade","decisao","impacto","autonomia","humano","ambiente","integracao","ia"]);
+
+function blankAnalysis(){
+  return {fontes:[],historico:[],qualidade:[],decisao:[],impacto:[],autonomia:[],humano:[],ambiente:[],integracao:[],ia:[],other:{},idx:0,completed:false,updatedAt:null};
+}
+function ensureAnalysis(key){
+  if(!S.analyses[key])S.analyses[key]=blankAnalysis();
+  return S.analyses[key];
+}
+function A(){return ensureAnalysis(S.chosen);}
+function otherBag(qkey){return S.phase===2&&P2_KEYS.has(qkey)?A().other:S.other;}
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}
+}
+try{
+  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+  if(saved&&saved.fluxos&&saved.analyses)Object.assign(S,saved);
+}catch(e){}
+
+function loadDemo(){
+  S.demo=true;
+  S.phase=1;
+  S.idx=1;
+  S.natureza=["Serviço executado por pessoas","Projeto ou solução customizada"];
+  S.resultados=["Tempo de ciclo ou prazo","Qualidade ou taxa de erro","Risco ou conformidade"];
+  S.info=["Sistemas corporativos","Documentos e arquivos","E-mail ou mensageria"];
+  S.conhec=["Há documentos, mas estão dispersos ou desatualizados","Os processos principais e parte das regras estão documentados"];
+  S.compliance=["Muito"];
+  S.fluxos=["contratos"];
+  S.problems={contratos:["Análise demorada","Dependência de especialistas","Risco de compromisso fora da alçada"]};
+  S.chosen="contratos";
+  S.other={};
+  S.analyses={contratos:{
+    fontes:["ERP ou sistema corporativo","Documentos","E-mail ou mensageria"],
+    historico:["Entre 1 e 3 anos","Varia conforme a fonte"],
+    qualidade:["Varia muito conforme a fonte"],
+    decisao:["Regras explícitas","Documentos e políticas","Julgamento contextual"],
+    impacto:["Contratual","Compliance ou regulatório","Dados ou segurança"],
+    autonomia:["Buscar e reunir informações","Conferir regras e documentos","Produzir análise ou recomendação"],
+    humano:["Exceção às regras","Compromisso contratual ou financeiro","Decisão difícil de reverter"],
+    ambiente:["Microsoft","Sistemas próprios"],
+    integracao:["Capacidade limitada"],
+    ia:["Uso individual de ferramentas"],
+    other:{},idx:0,completed:false,updatedAt:new Date().toISOString()
+  }};
+  saveState();
+  render();
+}
+
+/* flow of steps per phase */
+function steps1(){
+  const base=["intro","natureza","resultados","info","conhec","compliance","fluxos"];
+  const probs=S.fluxos.map(f=>"prob:"+f);
+  return base.concat(probs,["oportunidades"]);
+}
+const STEPS2=["transicao","p2fontes","p2historico","p2qualidade","p2decisao","p2impacto","p2autonomia","p2humano","p2ambiente","p2integracao","p2ia","sintese","final"];
+function flow(){return S.phase===1?steps1():STEPS2;}
+function curStep(){return flow()[S.idx];}
+
+// Ao reabrir o projeto, diagnósticos concluídos voltam para a carteira.
+// Isso evita prender a navegação no último relatório visualizado.
+if(S.phase===2&&S.chosen&&S.analyses[S.chosen]&&S.analyses[S.chosen].completed){
+  S.phase=1;
+  S.idx=steps1().indexOf("oportunidades");
+}
+
+/* ---------- helpers ---------- */
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
+
+function singleChips(arrRef,options){
+  const wrap=el("div","chips");
+  options.forEach(opt=>{
+    const on=arrRef.includes(opt);
+    const b=el("button","chip radio"); b.type="button";
+    b.setAttribute("aria-pressed",on?"true":"false");
+    b.appendChild(el("span","box"));
+    b.appendChild(el("span",null,opt));
+    b.onclick=()=>{ if(arrRef.includes(opt))arrRef.length=0; else {arrRef.length=0;arrRef.push(opt);} render(); };
+    wrap.appendChild(b);
+  });
+  return [wrap];
+}
+
+const OTHER="Outros", UNKNOWN="Não sei especificar";
+
+function resolve(qkey,arr){
+  const out=[];
+  const bag=otherBag(qkey);
+  arr.forEach(v=>{
+    if(v===OTHER){const t=(bag[qkey]||"").trim();out.push(t?t:"outros (não especificado)");}
+    else if(v===UNKNOWN)out.push("não sei especificar");
+    else out.push(v);
+  });
+  return out;
+}
+
+function multi(qkey,arrRef,options,max){
+  const nodes=[];
+  const bag=otherBag(qkey);
+  const wrap=el("div","chips");
+  const unknownOn=arrRef.includes(UNKNOWN);
+  const realCount=arrRef.filter(v=>v!==UNKNOWN).length;
+  const full=realCount>=max;
+  const mk=(opt,special)=>{
+    const on=arrRef.includes(opt);
+    const b=el("button","chip"+(special?" special":"")); b.type="button";
+    b.setAttribute("aria-pressed",on?"true":"false");
+    let disabled=false;
+    if(opt!==UNKNOWN){ if(unknownOn)disabled=true; else if(full&&!on)disabled=true; }
+    if(disabled)b.disabled=true;
+    b.appendChild(el("span","box"));
+    b.appendChild(el("span",null,opt));
+    b.onclick=()=>{
+      if(opt===UNKNOWN){
+        if(arrRef.includes(UNKNOWN)){arrRef.length=0;}
+        else{arrRef.length=0;arrRef.push(UNKNOWN);delete bag[qkey];}
+        render();return;
+      }
+      const i=arrRef.indexOf(opt);
+      if(i>=0){arrRef.splice(i,1); if(opt===OTHER)delete bag[qkey];}
+      else{
+        const u=arrRef.indexOf(UNKNOWN); if(u>=0)arrRef.splice(u,1);
+        if(arrRef.filter(v=>v!==UNKNOWN).length<max)arrRef.push(opt);
+      }
+      render();
+    };
+    wrap.appendChild(b);
+  };
+  options.forEach(o=>mk(o,false));
+  mk(OTHER,true);
+  mk(UNKNOWN,true);
+  nodes.push(wrap);
+  if(arrRef.includes(OTHER)&&!unknownOn){
+    const spec=el("div","specify");
+    const inp=document.createElement("input");
+    inp.type="text"; inp.className="specify-input"; inp.placeholder="Especifique";
+    inp.value=bag[qkey]||"";
+    inp.oninput=e=>{bag[qkey]=e.target.value;saveState();}; // store only, no re-render (keeps focus)
+    spec.appendChild(inp);
+    nodes.push(spec);
+  }
+  const c=el("div","counter"+(realCount>=max?" max":""));
+  c.innerHTML=unknownOn?"não sei especificar":`<b>${realCount}</b> de ${max} selecionado${max>1?"s":""}`;
+  nodes.push(c);
+  return nodes;
+}
+
+function qHeader(kicker,num,title,hint){
+  const s=el("div");
+  const eb=el("div","eyebrow");
+  eb.appendChild(el("span",null,kicker));
+  eb.appendChild(el("span","num",num));
+  eb.appendChild(el("span","rule"));
+  s.appendChild(eb);
+  s.appendChild(el("h1","q",title));
+  if(hint){const h=el("p","q-hint");h.innerHTML=hint;s.appendChild(h);}
+  return s;
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(S.phase===2&&S.chosen){const a=ensureAnalysis(S.chosen);a.idx=S.idx;a.updatedAt=new Date().toISOString();}
+  saveState();
+  document.body.classList.toggle("p2", S.phase===2);
+  renderChrome();
+  const scr=document.getElementById("screen");
+  const fresh=el("div","screen");
+  build(fresh,curStep());
+  scr.replaceWith(fresh); fresh.id="screen";
+  renderNav();
+  window.scrollTo({top:0,behavior:"instant"in window?"instant":"auto"});
+}
+
+function flowAnchor(lab,val,pos){
+  const a=el("div","anchor");
+  a.appendChild(el("span","dia"));
+  const box=el("span","anchor-box");
+  box.appendChild(el("span","lab",lab));
+  box.appendChild(el("span","val",val));
+  a.appendChild(box);
+  if(pos)a.appendChild(el("span","pos",pos));
+  return a;
+}
+
+function build(root,step){
+  if(step==="intro")return intro(root);
+  if(step==="transicao")return transicao(root);
+  if(step==="sintese")return sintese(root);
+  if(step==="oportunidades")return oportunidades(root);
+  if(step==="final")return final(root);
+
+  // keep the flow anchored while detailing it
+  if(step.startsWith("prob:")){
+    const k=step.slice(5);
+    root.appendChild(flowAnchor("Detalhando",FLOWS[k].label,(S.fluxos.indexOf(k)+1)+" de "+S.fluxos.length));
+  }else if(S.phase===2){
+    root.appendChild(flowAnchor("Fluxo em análise",FLOWS[S.chosen].title,null));
+  }
+
+  if(step==="natureza"){
+    root.appendChild(qHeader("Parte 1 · Descoberta","01 / 06","Qual é a natureza principal da entrega da organização?","Escolha até <b>2</b>."));
+    multi("natureza",S.natureza,NATUREZA,2).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="resultados"){
+    root.appendChild(qHeader("Parte 1 · Descoberta","02 / 06","Quais resultados são mais relevantes para avaliar o desempenho do negócio?","Escolha até <b>3</b>."));
+    multi("resultados",S.resultados,RESULTADOS,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="info"){
+    root.appendChild(qHeader("Parte 1 · Descoberta","03 / 06","Onde estão predominantemente as informações necessárias para operar?","Escolha até <b>3</b>."));
+    multi("info",S.info,INFO,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="conhec"){
+    root.appendChild(qHeader("Parte 1 · Descoberta","04 / 06","Como está organizado o conhecimento necessário para executar os processos?","Escolha até <b>3</b>."));
+    multi("conhec",S.conhec,CONHEC,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="compliance"){
+    root.appendChild(qHeader("Parte 1 · Descoberta","05 / 06","O quanto o negócio é regulado ou lida com dados sensíveis?","Escolha <b>1</b>."));
+    singleChips(S.compliance,COMPLIANCE).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="fluxos"){
+    root.appendChild(qHeader("Parte 1 · Descoberta","06 / 06","Quais fluxos acontecem de forma recorrente e merecem ser analisados?","Escolha até <b>3</b>."));
+    const keys=Object.keys(FLOWS);
+    const wrap=el("div","chips");
+    keys.forEach(k=>{
+      const on=S.fluxos.includes(k);
+      const full=S.fluxos.length>=3&&!on;
+      const b=el("button","chip");b.type="button";
+      b.setAttribute("aria-pressed",on?"true":"false");
+      if(full)b.disabled=true;
+      b.appendChild(el("span","box"));
+      b.appendChild(el("span",null,FLOWS[k].label));
+      b.onclick=()=>{
+        const i=S.fluxos.indexOf(k);
+        if(i>=0){S.fluxos.splice(i,1);delete S.problems[k];}
+        else if(S.fluxos.length<3){S.fluxos.push(k);S.problems[k]=S.problems[k]||[];}
+        render();
+      };
+      wrap.appendChild(b);
+    });
+    root.appendChild(wrap);
+    const c=el("div","counter"+(S.fluxos.length>=3?" max":""));
+    c.innerHTML=`<b>${S.fluxos.length}</b> de 3 selecionados`;
+    root.appendChild(c);return;
+  }
+  if(step.startsWith("prob:")){
+    const k=step.slice(5);const f=FLOWS[k];
+    root.appendChild(qHeader("Parte 1 · Problemas","","O que mais atrapalha este fluxo?","Escolha até <b>3</b>."));
+    S.problems[k]=S.problems[k]||[];
+    multi("prob:"+k,S.problems[k],f.problems,3).forEach(n=>root.appendChild(n));return;
+  }
+
+  /* PART 2 */
+  if(step==="p2fontes"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","01 / 10","Quais fontes são utilizadas neste fluxo?","Escolha até <b>3</b>."));
+    multi("fontes",A().fontes,FONTES,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2historico"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","02 / 10","Existe histórico suficiente das informações utilizadas neste fluxo?","Escolha até <b>3</b>."));
+    multi("historico",A().historico,HISTORICO,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2qualidade"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","03 / 10","Como você avalia a qualidade dessas informações para este fluxo?","Escolha até <b>3</b>."));
+    multi("qualidade",A().qualidade,QUALIDADE,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2decisao"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","04 / 10","O que normalmente orienta as decisões neste fluxo?","Escolha até <b>3</b>."));
+    multi("decisao",A().decisao,DECISAO,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2impacto"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","05 / 10","Que impactos um erro neste fluxo pode produzir?","Escolha até <b>3</b>."));
+    multi("impacto",A().impacto,IMPACTO,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2autonomia"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","06 / 10","O que um sistema poderia fazer sozinho neste fluxo?","Escolha até <b>3</b>."));
+    multi("autonomia",A().autonomia,AUTONOMIA,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2humano"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","07 / 10","Quando uma pessoa precisa participar antes da ação?","Escolha até <b>3</b>."));
+    multi("humano",A().humano,HUMANO,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2ambiente"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","08 / 10","Qual ambiente tecnológico predomina neste fluxo?","Escolha até <b>3</b>."));
+    multi("ambiente",A().ambiente,AMBIENTE,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2integracao"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","09 / 10","Existe capacidade para integrar os sistemas envolvidos neste fluxo?","Escolha até <b>3</b>."));
+    multi("integracao",A().integracao,INTEGRACAO,3).forEach(n=>root.appendChild(n));return;
+  }
+  if(step==="p2ia"){
+    root.appendChild(qHeader("Parte 2 · Decupagem","10 / 10","Qual é o estágio de uso de IA relacionado a este fluxo?","Escolha até <b>3</b>."));
+    multi("ia",A().ia,IA,3).forEach(n=>root.appendChild(n));return;
+  }
+}
+
+/* ---------- transition into final assessment ---------- */
+function sintese(root){
+  const f=FLOWS[S.chosen];
+  const h=el("div");
+  const eb=el("div","eyebrow");
+  eb.appendChild(el("span",null,"Análise concluída"));
+  eb.appendChild(el("span","rule"));
+  h.appendChild(eb);
+  const lead=el("h1","intro-lead");
+  lead.textContent="As respostas foram organizadas em uma recomendação.";
+  h.appendChild(lead);
+  const pick=el("div","pick");
+  pick.appendChild(el("span","pick-lab","Fluxo analisado"));
+  pick.appendChild(el("span","pick-val",f.title));
+  h.appendChild(pick);
+  const body=el("div","intro-body");
+  body.innerHTML="<p>A próxima tela reúne a conclusão, as evidências que a sustentam, os limites de autonomia e uma arquitetura possível para o fluxo.</p>";
+  h.appendChild(body);
+  const cta=el("div","intro-cta");
+  const view=el("button","btn primary","Ver recomendação");
+  view.onclick=()=>{S.idx++;render();};
+  cta.appendChild(view);
+  h.appendChild(cta);
+  root.appendChild(h);
+}
+
+/* ---------- intro ---------- */
+function intro(root){
+  const h=el("div");
+  const eb=el("div","eyebrow");
+  eb.appendChild(el("span",null,"Objetivo"));
+  eb.appendChild(el("span","rule"));
+  h.appendChild(eb);
+  const lead=el("h1","intro-lead");
+  lead.textContent="Instrumento de diagnóstico para fluxos agentes.";
+  h.appendChild(lead);
+  const body=el("div","intro-body");
+  body.innerHTML="<p>Duas etapas conectadas. A primeira lê o contexto declarado e organiza até três fluxos candidatos. A segunda testa o fluxo escolhido e produz uma recomendação proporcional às evidências: fontes, conhecimento, lógica de decisão, limites de autonomia, participação humana e diagrama condicional.</p>";
+  h.appendChild(body);
+  const stages=el("div","stages");
+  [["Etapa 1 · Descoberta","Entrega, resultados, informação, conhecimento, compliance e fluxos recorrentes."],
+   ["Etapa 2 · Decupagem","Aprofunda o fluxo escolhido até a arquitetura e o diagrama vertical."]].forEach(s=>{
+    const row=el("div","stage-row");
+    row.appendChild(el("div","lab",s[0]));
+    row.appendChild(el("div","txt",s[1]));
+    stages.appendChild(row);
+  });
+  h.appendChild(stages);
+  const cta=el("div","intro-cta");
+  const start=el("button","btn primary","Iniciar diagnóstico");
+  start.onclick=()=>{const fl=flow();if(S.idx<fl.length-1){S.idx++;render();}};
+  cta.appendChild(start);
+  const demo=el("button","btn ghost","Iniciar demonstração guiada");
+  demo.style.marginLeft="10px";
+  demo.onclick=loadDemo;
+  cta.appendChild(demo);
+  h.appendChild(cta);
+  root.appendChild(h);
+}
+
+/* ---------- transition into Part 2 ---------- */
+function transicao(root){
+  const f=FLOWS[S.chosen];
+  const h=el("div");
+  const eb=el("div","eyebrow");
+  eb.appendChild(el("span",null,"Etapa 2 · Decupagem"));
+  eb.appendChild(el("span","rule"));
+  h.appendChild(eb);
+  const lead=el("h1","intro-lead");
+  lead.textContent="Agora, vamos aprofundar o fluxo selecionado.";
+  h.appendChild(lead);
+  const pick=el("div","pick");
+  pick.appendChild(el("span","pick-lab","Fluxo escolhido"));
+  pick.appendChild(el("span","pick-val",f.title));
+  h.appendChild(pick);
+  const body=el("div","intro-body");
+  body.innerHTML="<p>As próximas dez perguntas tratam somente deste fluxo. As respostas serão salvas separadamente, e você poderá voltar à carteira para analisar os outros fluxos quando houver demanda.</p>";
+  h.appendChild(body);
+  const cta=el("div","intro-cta");
+  const start=el("button","btn primary","Começar decupagem");
+  start.onclick=()=>{const fl=flow();if(S.idx<fl.length-1){S.idx++;render();}};
+  cta.appendChild(start);
+  const alt=el("button","btn ghost","Voltar à carteira");
+  alt.style.marginLeft="10px";
+  alt.onclick=()=>{S.phase=1;S.idx=steps1().indexOf("oportunidades");render();};
+  cta.appendChild(alt);
+  h.appendChild(cta);
+  root.appendChild(h);
+}
+
+/* ---------- opportunities ---------- */
+function opportunitiesData(){
+  return S.fluxos.map((k,i)=>{
+    const f=FLOWS[k];
+    const probs=(S.problems[k]||[]);
+    const why=[];
+    probs.forEach(p=>why.push(p.charAt(0).toLowerCase()+p.slice(1)));
+    // context signals
+    if(S.conhec.includes(CONHEC[0]))why.push("conhecimento concentrado na experiência das pessoas");
+    if(S.conhec.includes(CONHEC[1]))why.push("documentos existem, mas dispersos ou desatualizados");
+    if(S.compliance.includes("Muito"))why.push("negócio muito regulado ou com dados sensíveis");
+    if(S.info.includes("Múltiplas fontes sem integração clara"))why.push("informação em múltiplas fontes sem integração clara");
+    if(S.info.includes("Principalmente nas pessoas"))why.push("informação concentrada principalmente nas pessoas");
+    return {key:k,idx:i+1,title:f.title,why,noProblem:probs.length===0,resultados:resolve("resultados",S.resultados)};
+  });
+}
+
+function oportunidades(root){
+  root.appendChild(qHeader("Parte 1 · Carteira","Fluxos","Escolha qual fluxo analisar agora","Cada fluxo mantém respostas e diagnóstico próprios. Você pode concluir um e voltar aos demais quando quiser."));
+  const data=opportunitiesData();
+  const demoBar=el("div","final-actions");
+  demoBar.style.margin="0 0 20px";
+  const demoBtn=el("button","btn ghost","Reiniciar demo tela a tela");
+  demoBtn.onclick=loadDemo;
+  demoBar.appendChild(demoBtn);
+  root.appendChild(demoBar);
+  const list=el("div","opps");
+  data.forEach(o=>{
+    const saved=S.analyses[o.key];
+    const state=saved?(saved.completed?"Concluído":"Em andamento"):"Não iniciado";
+    const card=el("div","opp");
+    const head=el("div","opp-head");
+    head.appendChild(el("span","opp-idx",String(o.idx).padStart(2,"0")));
+    head.appendChild(el("span","opp-title",o.title));
+    head.appendChild(el("span","opp-status"+(saved?(saved.completed?" done":" progress"):""),state));
+    card.appendChild(head);
+    const b=el("div","opp-body");
+    b.appendChild(el("div","opp-sub","Evidências informadas"));
+    if(o.noProblem){
+      const p=el("p",null,"Fluxo marcado como recorrente, sem problema específico apontado. Ainda não há evidência suficiente para chamá-lo de oportunidade.");
+      p.style.color="var(--human)";p.style.fontFamily="var(--mono)";p.style.fontSize="12.5px";p.style.margin="0 0 12px";
+      b.appendChild(p);
+    }
+    const ul=el("ul");
+    (o.why.length?o.why:["fluxo recorrente sem sinais adicionais no contexto"]).forEach(w=>ul.appendChild(el("li",null,w)));
+    b.appendChild(ul);
+    b.appendChild(el("div","opp-sub","Resultados gerais a validar neste fluxo"));
+    const tags=el("div","tags");
+    if(o.resultados.length){
+      o.resultados.forEach(r=>tags.appendChild(el("span","tag",r)));
+    }else{
+      tags.appendChild(el("span","tag empty","nenhum resultado marcado na pergunta 2"));
+    }
+    b.appendChild(tags);
+    card.appendChild(b);
+    const foot=el("div","opp-foot");
+    const cta=el("button","btn primary",saved?(saved.completed?"Ver diagnóstico":"Continuar análise"):"Analisar este fluxo");
+    cta.onclick=()=>{
+      S.chosen=o.key;
+      const a=ensureAnalysis(o.key);
+      S.phase=2;
+      S.idx=a.completed?STEPS2.indexOf("final"):(a.idx||0);
+      render();
+    };
+    foot.appendChild(cta);
+    card.appendChild(foot);
+    list.appendChild(card);
+  });
+  root.appendChild(list);
+
+  const completed=S.fluxos.filter(k=>S.analyses[k]&&S.analyses[k].completed);
+  if(completed.length>=2){
+    const sec=el("div","sec");
+    const h=el("div","sec-h");h.appendChild(el("span",null,"Comparação dos concluídos"));h.appendChild(el("span","rule"));sec.appendChild(h);
+    const tbl=el("table","tbl");tbl.innerHTML="<thead><tr><th>Fluxo</th><th>Direção recomendada</th></tr></thead>";
+    const tb=el("tbody");
+    completed.forEach(k=>{
+      const previous=S.chosen;S.chosen=k;
+      const assessment=neutralAssessment();
+      S.chosen=previous;
+      const tr=el("tr");tr.appendChild(el("td","cname",FLOWS[k].title));tr.appendChild(el("td","cfun",assessment.verdict));tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);sec.appendChild(tbl);root.appendChild(sec);
+  }
+}
+
+/* ---------- final generation ---------- */
+function neutralAssessment(){
+  const a=A();
+  let readiness=0, risk=0, uncertainty=0;
+  const positives=[], cautions=[];
+
+  if(a.qualidade.includes("Alta")){readiness+=2;positives.push("qualidade das informações declarada como alta");}
+  if(a.qualidade.includes("Média")){readiness+=1;cautions.push("qualidade das informações apenas média");}
+  if(a.qualidade.includes("Baixa")||a.qualidade.includes("Varia muito conforme a fonte")){readiness-=2;cautions.push("qualidade baixa ou irregular entre fontes");}
+  if(a.historico.some(x=>["Entre 1 e 3 anos","Mais de 3 anos"].includes(x))){readiness+=1;positives.push("há histórico potencialmente utilizável");}
+  if(a.historico.includes("Quase nenhum histórico")){readiness-=1;cautions.push("há pouco histórico disponível");}
+  if(a.integracao.some(x=>["Equipe interna","Fornecedores","Ambos"].includes(x))){readiness+=1;positives.push("foi indicada capacidade de integração");}
+  if(a.integracao.includes("Capacidade limitada")){readiness-=2;cautions.push("a capacidade de integração é limitada");}
+  if(a.decisao.some(x=>["Regras explícitas","Documentos e políticas"].includes(x))){readiness+=2;positives.push("parte da decisão tem critérios explícitos");}
+  if(a.decisao.some(x=>["Experiência profissional","Julgamento contextual"].includes(x))){readiness-=1;cautions.push("a decisão depende de experiência ou julgamento contextual");}
+  if(a.impacto.includes("Baixo impacto e facilmente reversível")){risk-=2;positives.push("o erro foi classificado como reversível e de baixo impacto");}
+  risk+=a.impacto.filter(x=>["Financeiro","Contratual","Compliance ou regulatório","Dados ou segurança","Reputação"].includes(x)).length;
+  if(S.compliance.includes("Muito"))risk+=2;
+  if(risk>0)cautions.push("há impacto relevante que exige limites, registro e escalonamento");
+
+  const required=[a.fontes,a.historico,a.qualidade,a.decisao,a.impacto,a.autonomia,a.humano,a.ambiente,a.integracao,a.ia];
+  uncertainty=required.filter(a=>a.includes(UNKNOWN)).length;
+  if(uncertainty)cautions.push("há respostas não especificadas; a conclusão tem confiança reduzida");
+
+  let mode, verdict;
+  if(readiness<=-2){mode="prepare";verdict="Preparar dados e processo antes de automatizar";}
+  else if(risk>=2 || readiness<2){mode="assist";verdict="Começar com apoio à decisão, sob supervisão";}
+  else if(risk===0 && readiness>=4){mode="bounded";verdict="Candidato a automação limitada e reversível";}
+  else {mode="pilot";verdict="Validar com piloto assistido antes de ampliar autonomia";}
+  const confidence=uncertainty?"baixa":(readiness>=3?"moderada":"moderada-baixa");
+  if(!positives.length)positives.push("nenhum sinal positivo forte foi informado");
+  return {readiness,risk,uncertainty,mode,verdict,confidence,positives,cautions};
+}
+
+function componentsModel(){
+  const f=FLOWS[S.chosen];
+  const a=A();
+  const rows=[];
+  const assessment=neutralAssessment();
+  const strongControl = S.compliance.includes("Muito") ||
+    a.impacto.some(x=>["Compliance ou regulatório","Dados ou segurança","Contratual","Financeiro"].includes(x));
+  const onlyLow = a.impacto.length===1 && a.impacto[0]==="Baixo impacto e facilmente reversível";
+  const hasHuman = a.humano.length>0;
+  const needsKnowledge = a.decisao.some(x=>["Regras explícitas","Documentos e políticas","Comparação com padrões"].includes(x));
+  const needsHistory = a.decisao.includes("Dados históricos");
+  const needsAnalysis = a.autonomia.includes("Produzir análise ou recomendação") ||
+    a.decisao.some(x=>["Experiência profissional","Julgamento contextual","Comparação com padrões"].includes(x));
+
+  rows.push({name:"Entrada do fluxo",human:false,
+    fun:"Receber o caso de "+f.title.toLowerCase()+" e identificar o tipo.",
+    src:["Fluxo escolhido: "+f.title]});
+
+  rows.push({name:"Camada de contexto",human:false,
+    fun:"Reunir dados e documentos das fontes envolvidas: "+(resolve("fontes",a.fontes).join(", ")||"fontes ainda não definidas")+".",
+    src:["Fontes: "+(resolve("fontes",a.fontes).join(", ")||"nenhuma marcada")]});
+
+  if(needsKnowledge){
+    rows.push({name:"Camada de conhecimento",human:false,
+      fun:"Consultar "+a.decisao.filter(x=>["Regras explícitas","Documentos e políticas","Comparação com padrões"].includes(x)).join(", ").toLowerCase()+".",
+      src:["Base das decisões: "+resolve("decisao",a.decisao).join(", ")]});
+  }
+  if(needsHistory){
+    rows.push({name:"Memória histórica",human:false,
+      fun:"Consultar histórico para orientar a análise ("+(resolve("historico",a.historico).join(", ")||"não informado")+"; qualidade "+((resolve("qualidade",a.qualidade).join(", ")||"não informada").toLowerCase())+").",
+      src:["Base das decisões: Dados históricos","Histórico: "+(resolve("historico",a.historico).join(", ")||"não informado"),"Qualidade: "+(resolve("qualidade",a.qualidade).join(", ")||"não informada")]});
+  }
+  if(needsAnalysis){
+    rows.push({name:"Análise",human:false,
+      fun:"Identificar condições, desvios e produzir recomendação.",
+      src:["Autonomia / base das decisões relacionadas à análise"]});
+  }
+  rows.push({name:"Decisão",human:false,
+    fun:needsKnowledge?"Comparar o caso com regras e alçadas.":"Organizar evidências para decisão, sem presumir critérios que não foram informados.",
+    src:["Base das decisões: "+(resolve("decisao",a.decisao).join(", ")||"não marcada")]});
+
+  if(!onlyLow || strongControl){
+    const extra=strongControl?" Liga logs e rastreabilidade reforçados.":"";
+    rows.push({name:"Controle",human:false,
+      fun:"Identificar risco, exceção ou baixa confiança antes de agir."+extra,
+      src:["Impacto do erro: "+(resolve("impacto",a.impacto).join(", ")||"não marcado"),"Compliance geral: "+(resolve("compliance",S.compliance).join(", ")||"não marcado")]});
+  }
+  if(hasHuman){
+    rows.push({name:"Decisão humana",human:true,
+      fun:"Avaliar casos que excedam os limites: "+resolve("humano",a.humano).join(", ").toLowerCase()+".",
+      src:["Participação humana: "+resolve("humano",a.humano).join(", ")]});
+  }
+  const execVerbs=[];
+  if(a.autonomia.includes("Atualizar registros"))execVerbs.push("atualizar registros");
+  if(a.autonomia.includes("Executar ações dentro de limites previamente definidos"))execVerbs.push("executar ações dentro dos limites definidos");
+  rows.push({name:assessment.mode==="prepare"?"Próximo passo":"Execução",human:false,
+    fun:assessment.mode==="prepare"?"Não executar automaticamente: estruturar fontes, critérios e integração, então reavaliar.":((execVerbs.length?("Registrar ou "+execVerbs.join(" e ")+"."):"Entregar análise para o responsável, sem ação automática não autorizada.")+" Ambiente: "+(resolve("ambiente",a.ambiente).join(", ")||"não informado")+"."),
+    src:["Autonomia: "+(resolve("autonomia",a.autonomia).join(", ")||"não marcada"),"Ambiente: "+(resolve("ambiente",a.ambiente).join(", ")||"não informado"),"Integração: "+(resolve("integracao",a.integracao).join(", ")||"não informada")]});
+
+  rows.push({name:"Monitoramento",human:false,
+    fun:"Acompanhar "+(resolve("resultados",S.resultados).join(", ").toLowerCase()||"os indicadores")+", além de tempo, erro e exceções.",
+    src:["Indicadores (pergunta 2): "+(resolve("resultados",S.resultados).join(", ")||"nenhum marcado")]});
+
+  return {rows,assessment,flags:{strongControl,onlyLow,hasHuman,needsKnowledge,needsHistory,needsAnalysis}};
+}
+
+function mermaidFor(model){
+  const {rows,flags,assessment}=model;
+  const a=A();
+  const has=n=>rows.some(r=>r.name===n);
+  let L=["flowchart TD"];
+  L.push('A["Entrada do fluxo"]');
+  L.push('B["Reunir contexto"]');
+  if(has("Camada de conhecimento"))L.push('C["Consultar regras e documentos"]');
+  if(has("Memória histórica"))L.push('M["Consultar histórico"]');
+  if(has("Análise"))L.push('D["Analisar e recomendar"]');
+  L.push('E["Organizar decisão e aplicar critérios informados"]');
+  const control=has("Controle");
+  if(control)L.push('F{"Risco, exceção ou baixa confiança?"}');
+  L.push(assessment.mode==="prepare"?'G["Preparar dados e processo"]':'G["Executar / registrar dentro dos limites"]');
+  if(flags.hasHuman)L.push('H["Decisão humana"]');
+  if(control&&!flags.hasHuman)L.push('X["Interromper e encaminhar"]');
+  L.push('I["Monitoramento"]');
+  L.push("");
+  // spine
+  let prev="A";
+  const chain=["B"];
+  if(has("Camada de conhecimento"))chain.push("C");
+  if(has("Memória histórica"))chain.push("M");
+  if(has("Análise"))chain.push("D");
+  chain.push("E");
+  L.push("A --> B");
+  for(let i=1;i<chain.length;i++)L.push(chain[i-1]+" --> "+chain[i]);
+  if(control){
+    L.push("E --> F");
+    if(flags.hasHuman){
+      L.push('F -->|"Dentro da alçada"| G');
+      L.push('F -->|"Exceção ou risco"| H');
+      L.push("H --> G");
+    }else{
+      L.push('F -->|"Dentro da alçada"| G');
+      L.push('F -->|"Fora dos limites"| X');
+      L.push("X --> I");
+    }
+  }else{
+    if(flags.hasHuman){L.push("E --> H");L.push("H --> G");}
+    else L.push("E --> G");
+  }
+  L.push("G --> I");
+  L.push("");
+  // lateral
+  const fontes=(resolve("fontes",a.fontes).join(", ")||"fontes do fluxo").replace(/"/g,"'");
+  L.push('DATA["'+fontes+'"] -. dados .-> B');
+  if(has("Camada de conhecimento")){
+    const kn=a.decisao.filter(x=>["Regras explícitas","Documentos e políticas","Comparação com padrões"].includes(x)).join(", ").replace(/"/g,"'");
+    L.push('DOC["'+(kn||"regras e políticas")+'"] -. conhecimento .-> C');
+  }
+  const tech=(resolve("ambiente",a.ambiente).join(", ")||"ambiente do fluxo").replace(/"/g,"'");
+  L.push('TECH["'+tech+'"] -. execução .-> G');
+  const kpi=(resolve("resultados",S.resultados).join(", ")||"indicadores").replace(/"/g,"'");
+  L.push('KPI["'+kpi+'"] -. indicadores .-> I');
+  L.push("");
+  // styles
+  L.push("classDef machine fill:#14181f,stroke:#4fe3c6,stroke-width:1.2px,color:#e9e7df;");
+  L.push("classDef human fill:#241a10,stroke:#ffb454,stroke-width:1.4px,color:#ffdca8;");
+  L.push("classDef gate fill:#111820,stroke:#4fe3c6,stroke-width:1.2px,color:#e9e7df;");
+  L.push("classDef side fill:#0f141a,stroke:#38414f,stroke-width:1px,color:#8b95a3;");
+  const machineNodes=["A","B","E","G","I"];
+  if(has("Camada de conhecimento"))machineNodes.push("C");
+  if(has("Memória histórica"))machineNodes.push("M");
+  if(has("Análise"))machineNodes.push("D");
+  L.push("class "+machineNodes.join(",")+" machine;");
+  if(control)L.push("class F gate;");
+  if(flags.hasHuman)L.push("class H human;");
+  if(control&&!flags.hasHuman)L.push("class X human;");
+  L.push("class DATA,DOC,TECH,KPI side;");
+  return L.join("\n");
+}
+
+function contextReading(model){
+  const f=FLOWS[S.chosen];
+  const a=A();
+  const fontes=resolve("fontes",a.fontes).join(", ")||"as fontes do fluxo";
+  const base=resolve("decisao",a.decisao).join(", ").toLowerCase()||"critérios ainda não definidos";
+  const auton=resolve("autonomia",a.autonomia).join(", ").toLowerCase()||"tarefas ainda não definidas";
+  const hum=resolve("humano",a.humano).join(", ").toLowerCase();
+  let t="O fluxo de "+f.title.toLowerCase()+" recebe casos e informações a partir de "+fontes+". ";
+  t+="As decisões se apoiam em "+base+". ";
+  t+="O sistema pode assumir "+auton+". ";
+  if(hum)t+="Participação humana é exigida em: "+hum+". ";
+  else t+="Nenhum ponto de escalonamento humano foi marcado, então a autonomia opera dentro dos limites definidos sem revisão obrigatória. ";
+  const amb=resolve("ambiente",a.ambiente).join(", ");
+  const ambTxt=(!amb||amb==="não sei especificar")?"tecnológico, ainda não especificado,":amb;
+  t+="O ambiente "+ambTxt+" define as integrações para leitura, registro e execução.";
+  return t;
+}
+
+let lastModel=null;
+function final(root){
+  const f=FLOWS[S.chosen];
+  A().completed=true;A().idx=STEPS2.indexOf("final");A().updatedAt=new Date().toISOString();saveState();
+  const model=componentsModel();lastModel=model;
+
+  const head=el("div","final-head");
+  head.appendChild(el("div","final-kicker","Saída final · Avaliação de adequação"));
+  head.appendChild(el("h1","final-title",f.title));
+  root.appendChild(head);
+
+  // why
+  const s1=el("div","sec");
+  const h1=el("div","sec-h");h1.appendChild(el("span",null,"Por que este fluxo foi analisado"));h1.appendChild(el("span","rule"));
+  s1.appendChild(h1);
+  const why=el("ul","whylist");
+  const probs=S.problems[S.chosen]||[];
+  const items=[];
+  probs.forEach(p=>items.push(p));
+  if(S.conhec.length)items.push("conhecimento: "+resolve("conhec",S.conhec).join(", ").toLowerCase());
+  if(S.compliance.length)items.push("compliance geral: "+resolve("compliance",S.compliance).join(", ").toLowerCase());
+  if(!items.length)items.push("fluxo recorrente marcado sem problema específico");
+  items.forEach(i=>why.appendChild(el("li",null,i)));
+  s1.appendChild(why);
+  root.appendChild(s1);
+
+  // neutral recommendation: the questionnaire may reject autonomous automation
+  const s0=el("div","sec");
+  const h0=el("div","sec-h");h0.appendChild(el("span",null,"Conclusão e nível de confiança"));h0.appendChild(el("span","rule"));
+  s0.appendChild(h0);
+  const assessment=el("div","assessment");
+  const verdict=el("div");
+  verdict.appendChild(el("div","assessment-verdict",model.assessment.verdict));
+  verdict.appendChild(el("div","assessment-confidence","Confiança "+model.assessment.confidence));
+  assessment.appendChild(verdict);
+  const notes=el("ul","assessment-notes");
+  model.assessment.positives.forEach(x=>notes.appendChild(el("li",null,"Sinal favorável: "+x+".")));
+  model.assessment.cautions.forEach(x=>notes.appendChild(el("li",null,"Ressalva: "+x+".")));
+  notes.appendChild(el("li",null,"Esta é uma hipótese baseada apenas nas respostas declaradas; não substitui validação do processo, dos dados e dos controles."));
+  assessment.appendChild(notes);
+  s0.appendChild(assessment);
+  root.appendChild(s0);
+
+  // reading
+  const s2=el("div","sec");
+  const h2=el("div","sec-h");h2.appendChild(el("span",null,"Leitura contextual"));h2.appendChild(el("span","rule"));
+  s2.appendChild(h2);
+  s2.appendChild(el("div","reading",contextReading(model)));
+  root.appendChild(s2);
+
+  // components (traceable)
+  const s3=el("div","sec");
+  const h3=el("div","sec-h");h3.appendChild(el("span",null,"Arquitetura condicional"));h3.appendChild(el("span","rule"));
+  s3.appendChild(h3);
+  s3.appendChild(el("div","trace-hint","Selecione um componente para ver a origem."));
+  const tbl=el("table","tbl");
+  tbl.innerHTML="<thead><tr><th>Componente</th><th>Função</th></tr></thead>";
+  const tb=el("tbody");
+  model.rows.forEach(r=>{
+    const tr=el("tr","crow"+(r.human?" human":""));
+    const td1=el("td");
+    const nm=el("div","cname");
+    nm.appendChild(el("span","pill"+(r.human?" human":"")));
+    nm.appendChild(el("span",null,r.name));
+    td1.appendChild(nm);
+    const td2=el("td");
+    td2.appendChild(el("div","cfun",r.fun));
+    const src=el("div","csrc","Origem: "+r.src.join("  ·  "));
+    td2.appendChild(src);
+    tr.onclick=()=>tr.classList.toggle("hot");
+    tr.appendChild(td1);tr.appendChild(td2);
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);
+  s3.appendChild(tbl);
+  root.appendChild(s3);
+
+  // diagram
+  const s4=el("div","sec");
+  const h4=el("div","sec-h");h4.appendChild(el("span",null,"Arquitetura"));h4.appendChild(el("span","rule"));
+  s4.appendChild(h4);
+  const dw=el("div","diagram-wrap");
+  const md=el("div","mermaid");
+  md.textContent=mermaidFor(model);
+  dw.appendChild(md);
+  s4.appendChild(dw);
+  const leg=el("div","legend");
+  leg.innerHTML='<span><i style="background:#4fe3c6"></i>Etapa autônoma</span><span><i style="background:#ffb454"></i>Decisão humana</span><span><i style="background:#38414f"></i>Entrada lateral</span>';
+  s4.appendChild(leg);
+  root.appendChild(s4);
+
+  // actions
+  const acts=el("div","final-actions");
+  const demo=el("button","btn primary","Reexecutar demo tela a tela");
+  demo.onclick=loadDemo;
+  const other=el("button","btn ghost","Voltar à carteira de fluxos");
+  other.onclick=()=>{S.phase=1;S.idx=steps1().indexOf("oportunidades");render();};
+  const restart=el("button","btn ghost","Iniciar novo diagnóstico");
+  restart.onclick=()=>{localStorage.removeItem(STORAGE_KEY);location.reload();};
+  acts.appendChild(demo);acts.appendChild(other);acts.appendChild(restart);
+  root.appendChild(acts);
+
+  // render mermaid
+  try{
+    mermaid.initialize({startOnLoad:false,theme:"base",securityLevel:"loose",flowchart:{curve:"basis",nodeSpacing:44,rankSpacing:52},themeVariables:{fontFamily:"IBM Plex Mono, monospace",fontSize:"13px",lineColor:"#4a5563",primaryColor:"#14181f",primaryBorderColor:"#4fe3c6",primaryTextColor:"#e9e7df"}});
+    mermaid.run({nodes:[md]});
+  }catch(e){md.textContent="Não foi possível desenhar o diagrama. Definição gerada:\n\n"+mermaidFor(model);md.style.whiteSpace="pre-wrap";md.style.fontFamily="var(--mono)";md.style.fontSize="12px";md.style.color="var(--muted)";}
+}
+
+/* ---------- chrome / nav ---------- */
+function renderChrome(){
+  const step=curStep();
+  const p=document.getElementById("phases");
+  p.innerHTML="";
+  const s1=steps1();
+  const oppIdx=s1.indexOf("oportunidades");
+  const finalIdx=STEPS2.indexOf("final");
+  // fills[0..3] each 0..1, and which segment is active
+  let fills=[0,0,0,0], active=0;
+  if(S.phase===1 && step!=="oportunidades"){
+    active=0; fills=[oppIdx?Math.min(1,S.idx/oppIdx):0,0,0,0];
+  }else if(step==="oportunidades"){
+    active=1; fills=[1,1,0,0];
+  }else if(S.phase===2 && step!=="final"){
+    active=2; fills=[1,1, finalIdx?Math.min(1,S.idx/finalIdx):0, 0];
+  }else if(step==="final"){
+    active=3; fills=[1,1,1,1];
+  }
+  const labels=["Descoberta","Oportunidades","Decupagem","Diagnóstico"];
+  labels.forEach((lab,i)=>{
+    const done=i<active || fills[i]>=1;
+    const seg=el("div","seg"+(i===active?" active":"")+(done&&i!==active?" done":""));
+    const bar=el("div","bar");
+    const fill=el("i");
+    fill.style.width=Math.round(fills[i]*100)+"%";
+    bar.appendChild(fill);
+    seg.appendChild(bar);
+    seg.appendChild(el("div","lab",lab));
+    p.appendChild(seg);
+  });
+}
+
+function stepValid(){
+  const step=curStep();
+  switch(step){
+    case "intro":return true;
+    case "natureza":return S.natureza.length>0;
+    case "resultados":return S.resultados.length>0;
+    case "info":return S.info.length>0;
+    case "conhec":return S.conhec.length>0;
+    case "compliance":return S.compliance.length>0;
+    case "fluxos":return S.fluxos.length>0;
+    case "oportunidades":return false; // advance only via card
+    case "p2fontes":return A().fontes.length>0;
+    case "p2historico":return A().historico.length>0;
+    case "p2qualidade":return A().qualidade.length>0;
+    case "p2decisao":return A().decisao.length>0;
+    case "p2impacto":return A().impacto.length>0;
+    case "p2autonomia":return A().autonomia.length>0;
+    case "p2humano":return A().humano.length>0;
+    case "p2ambiente":return A().ambiente.length>0;
+    case "p2integracao":return A().integracao.length>0;
+    case "p2ia":return A().ia.length>0;
+    case "sintese":return true;
+    case "final":return false;
+    default:
+      if(step.startsWith("prob:"))return (S.problems[step.slice(5)]||[]).length>0;
+      return true;
+  }
+}
+
+function renderNav(){
+  const step=curStep();
+  const back=document.getElementById("back");
+  const next=document.getElementById("next");
+  const status=document.getElementById("status");
+  const atStart=S.phase===1&&S.idx===0;
+  back.style.visibility=atStart?"hidden":"visible";
+  back.textContent=step==="oportunidades"?"Início":((step==="final"||step==="transicao")?"Carteira":"Voltar");
+
+  if(step==="intro"||step==="transicao"||step==="sintese"){
+    next.style.display="none";
+    status.textContent="";
+  }else if(step==="oportunidades"){
+    next.style.display="none";
+    status.textContent="Escolha um fluxo para iniciar ou continuar";
+  }else if(step==="final"){
+    next.style.display="none";
+    status.textContent="Diagnóstico completo · cada componente é rastreável";
+  }else{
+    next.style.display="";
+    next.disabled=!stepValid();
+    const isLast2=S.phase===2&&curStep()==="p2ia";
+    next.textContent=isLast2?"Gerar diagnóstico":"Avançar";
+    status.textContent="";
+  }
+}
+
+document.getElementById("next").onclick=()=>{
+  if(!stepValid())return;
+  const fl=flow();
+  if(S.idx<fl.length-1){S.idx++;render();}
+};
+document.getElementById("back").onclick=()=>{
+  const step=curStep();
+  if(step==="oportunidades"){S.idx=0;render();return;}
+  if(S.phase===2&&(S.idx===0||step==="final")){S.phase=1;S.idx=steps1().indexOf("oportunidades");render();return;}
+  if(S.idx>0){S.idx--;render();}
+};
+document.getElementById("demoQuick").onclick=loadDemo;
+
+render();
+</script>
+</body>
+</html>
