@@ -31,9 +31,21 @@ body{
 }
 body.p2{
   --bg:#0b0a12;
+  --surface:#171522;
+  --surface2:#201d30;
+  --line:#342f49;
+  --machine:#9b8cff;
+  --machine-dim:rgba(155,140,255,.15);
+  --machine-line:rgba(155,140,255,.55);
   background-image:
-    linear-gradient(180deg, rgba(120,132,235,.05), transparent 260px),
+    radial-gradient(circle at 50% 0,rgba(155,140,255,.13),transparent 420px),
+    linear-gradient(180deg,rgba(87,72,160,.10),transparent 320px),
     repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,.013) 40px);
+}
+body.is-final{
+  --machine:#ffb454;
+  --machine-dim:rgba(255,180,84,.13);
+  --machine-line:rgba(255,180,84,.48);
 }
 a{color:var(--machine)}
 button{font-family:inherit}
@@ -85,8 +97,18 @@ h1.q{font-family:var(--display);font-weight:600;font-size:clamp(24px,4.2vw,34px)
 .anchor .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);line-height:1}
 .anchor .val{font-family:var(--display);font-weight:600;color:var(--ink);font-size:14.5px;line-height:1.2}
 .anchor .pos{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
-body.p2 .anchor{border-left-color:#7c84eb}
-body.p2 .anchor .dia{background:#7c84eb}
+body.p2 .anchor{
+  padding:17px 19px;
+  border:1px solid rgba(155,140,255,.45);
+  border-left:4px solid #9b8cff;
+  background:linear-gradient(105deg,rgba(155,140,255,.20),rgba(65,54,112,.16) 55%,var(--surface));
+  box-shadow:0 14px 34px -24px rgba(155,140,255,.8);
+}
+body.p2 .anchor .dia{width:10px;height:10px;background:#9b8cff;box-shadow:0 0 16px rgba(155,140,255,.75)}
+body.p2 .anchor .lab{font-size:10px;color:#bdb5ff;letter-spacing:.2em}
+body.p2 .anchor .val{font-size:17px;color:#fff;font-weight:700}
+body.p2 .anchor .pos{color:#bdb5ff}
+body.is-final .anchor{border-left-color:var(--human)}
 
 /* chips */
 .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
@@ -491,6 +513,7 @@ function render(){
   if(S.phase===2&&S.chosen){const a=ensureAnalysis(S.chosen);a.idx=S.idx;a.updatedAt=new Date().toISOString();}
   saveState();
   document.body.classList.toggle("p2", S.phase===2);
+  document.body.classList.toggle("is-final",curStep()==="final");
   renderChrome();
   const scr=document.getElementById("screen");
   const fresh=el("div","screen");
