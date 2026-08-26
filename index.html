@@ -52,15 +52,16 @@ button{font-family:inherit}
 
 /* header / vitals */
 .top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#20262f,#191e26);border-bottom:1px solid #333c49;box-shadow:0 8px 24px -14px rgba(0,0,0,.75)}
-.top-inner{max-width:var(--maxw);margin:0 auto;padding:18px 22px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px 24px}
-.brand{display:flex;align-items:center;gap:15px;min-width:0}
-.brand .mark{width:132px;height:42px;padding:0;flex:none;display:grid;place-items:center;border:0;background:transparent}
+.top-inner{max-width:var(--maxw);margin:0 auto;padding:17px 22px 15px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 24px}
+.brand{display:contents}
+.brand .mark{grid-column:1/-1;grid-row:1;justify-self:start;width:132px;height:42px;padding:0;display:grid;place-items:center;border:0;background:transparent}
 .brand .mark img{display:block;width:100%;height:100%;object-fit:contain}
-.brand .wm{display:flex;flex-direction:column;gap:6px;min-width:0;line-height:1}
+.brand .wm{grid-column:1;grid-row:2;display:flex;flex-direction:column;gap:6px;min-width:0;line-height:1}
 .brand .t{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.02em;color:var(--ink);line-height:1.05}
 .brand .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;line-height:1}
-.track{grid-column:1/-1;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:12px;margin:0}
+.track{grid-column:1/-1;grid-row:3;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:12px;margin-top:3px}
 .demo-quick{border:1px solid var(--machine-line);background:var(--machine-dim);color:var(--machine);border-radius:8px;padding:8px 11px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.demo-quick{grid-column:2;grid-row:2;justify-self:end}
 .demo-quick:hover{background:rgba(79,227,198,.2)}
 .demo-short{display:none}
 .seg{display:flex;flex-direction:column;gap:6px;width:auto;min-width:0}
@@ -71,10 +72,9 @@ button{font-family:inherit}
 .seg.active .lab{color:var(--ink)}
 @media(max-width:700px){
   .top-inner{padding:14px 16px 12px;gap:12px 14px;grid-template-columns:minmax(0,1fr) auto}
-  .brand{gap:12px}
   .brand .mark{width:112px;height:35px;padding:0}
   .brand .t{font-size:18px}
-  .track{grid-column:1/-1;width:100%;margin:0;gap:6px}
+  .track{grid-column:1/-1;grid-row:3;width:100%;margin-top:2px;gap:6px}
   .seg{flex:1;width:auto}
   .seg .lab{display:none}
   .seg.active .lab{display:block;font-size:10px;letter-spacing:.04em}
@@ -281,7 +281,6 @@ body.is-final .anchor{border-left-color:var(--human)}
       </span>
       <span class="wm">
         <span class="t">Diagnóstico de fluxos agentes</span>
-        <span class="k">Avaliação de pertinência técnica</span>
       </span>
     </div>
     <button class="demo-quick" id="demoQuick" type="button" aria-label="Demo guiada"><span class="demo-long">Demo guiada</span><span class="demo-short">Demo</span></button>
