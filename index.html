@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contraprova · Diagnóstico de fluxos agentes</title>
+<title>Diagnóstico de fluxos agentes · Tech Hall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -54,9 +54,10 @@ button{font-family:inherit}
 .top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#20262f,#191e26);border-bottom:1px solid #333c49;box-shadow:0 8px 24px -14px rgba(0,0,0,.75)}
 .top-inner{max-width:var(--maxw);margin:0 auto;padding:26px 22px;min-height:112px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:15px;min-width:0}
-.brand .mark{width:44px;height:44px;flex:none;display:grid;place-items:center;border:1px solid var(--machine-line);border-radius:11px;background:var(--machine-dim)}
+.brand .mark{width:118px;height:42px;padding:7px 10px;flex:none;display:grid;place-items:center;border:1px solid rgba(255,255,255,.72);border-radius:10px;background:#f2f0e9;box-shadow:0 6px 18px -12px rgba(0,0,0,.8)}
+.brand .mark img{display:block;width:100%;height:100%;object-fit:contain}
 .brand .wm{display:flex;flex-direction:column;gap:6px;min-width:0;line-height:1}
-.brand .t{font-family:var(--display);font-weight:700;font-size:27px;letter-spacing:-.02em;color:var(--ink);line-height:1}
+.brand .t{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.02em;color:var(--ink);line-height:1.05}
 .brand .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;line-height:1}
 .track{display:flex;align-items:flex-end;gap:10px;margin-left:auto}
 .demo-quick{border:1px solid var(--machine-line);background:var(--machine-dim);color:var(--machine);border-radius:8px;padding:8px 11px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
@@ -70,8 +71,8 @@ button{font-family:inherit}
 @media(max-width:700px){
   .top-inner{min-height:auto;padding:16px 18px;gap:14px}
   .brand{gap:12px}
-  .brand .mark{width:40px;height:40px}
-  .brand .t{font-size:23px}
+  .brand .mark{width:104px;height:36px;padding:6px 9px}
+  .brand .t{font-size:18px}
   .track{width:100%;margin-left:0;gap:6px}
   .seg{flex:1;width:auto}
   .seg .lab{display:none}
@@ -255,8 +256,8 @@ body.is-final .anchor{border-left-color:var(--human)}
   .anchor .pos{margin-left:0;width:100%;padding-left:20px}
 }
 @media(max-width:420px){
-  .brand .mark{width:36px;height:36px}
-  .brand .t{font-size:20px}
+  .brand .mark{width:92px;height:32px;padding:5px 8px}
+  .brand .t{font-size:16px}
   .brand .k{font-size:9px;letter-spacing:.12em}
   .btn{padding:10px 13px;font-size:13px}
 }
@@ -271,19 +272,11 @@ body.is-final .anchor{border-left-color:var(--human)}
   <div class="top-inner">
     <div class="brand">
       <span class="mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-          <circle cx="12" cy="3.6" r="1.7" fill="#4fe3c6"/>
-          <path d="M12 5.3 V9.4" stroke="#4fe3c6" stroke-width="1.6" stroke-linecap="round"/>
-          <rect x="9" y="9.5" width="6" height="6" rx="1.3" transform="rotate(45 12 12.5)" stroke="#4fe3c6" stroke-width="1.6"/>
-          <path d="M12 15.7 L7.2 20.2" stroke="#4fe3c6" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M12 15.7 L16.8 20.2" stroke="#ffb454" stroke-width="1.6" stroke-linecap="round"/>
-          <circle cx="7.2" cy="20.4" r="1.5" fill="#4fe3c6"/>
-          <circle cx="16.8" cy="20.4" r="1.5" fill="#ffb454"/>
-        </svg>
+        <img src="tech-hall-logo.png" alt="">
       </span>
       <span class="wm">
-        <span class="t">Contraprova</span>
-        <span class="k">Diagnóstico de fluxos agentes</span>
+        <span class="t">Diagnóstico de fluxos agentes</span>
+        <span class="k">Avaliação de pertinência técnica</span>
       </span>
     </div>
     <button class="demo-quick" id="demoQuick" type="button">Demo guiada</button>
@@ -348,7 +341,8 @@ const S={
   other:{}                       // respostas livres da etapa 1
 };
 
-const STORAGE_KEY="contraprova.portfolio.v4";
+const STORAGE_KEY="diagnostico-fluxos-agentes.portfolio.v1";
+const LEGACY_STORAGE_KEY="contraprova.portfolio.v4";
 const P2_KEYS=new Set(["fontes","historico","qualidade","decisao","impacto","autonomia","humano","ambiente","integracao","ia"]);
 
 function blankAnalysis(){
@@ -364,7 +358,7 @@ function saveState(){
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}
 }
 try{
-  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||localStorage.getItem(LEGACY_STORAGE_KEY)||"null");
   if(saved&&saved.fluxos&&saved.analyses)Object.assign(S,saved);
 }catch(e){}
 
@@ -1109,7 +1103,7 @@ function final(root){
   const other=el("button","btn ghost","Voltar à carteira de fluxos");
   other.onclick=()=>{S.phase=1;S.idx=steps1().indexOf("oportunidades");render();};
   const restart=el("button","btn ghost","Iniciar novo diagnóstico");
-  restart.onclick=()=>{localStorage.removeItem(STORAGE_KEY);location.reload();};
+  restart.onclick=()=>{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(LEGACY_STORAGE_KEY);location.reload();};
   acts.appendChild(demo);acts.appendChild(other);acts.appendChild(restart);
   root.appendChild(acts);
 
