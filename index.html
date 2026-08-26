@@ -54,7 +54,7 @@ button{font-family:inherit}
 .top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#20262f,#191e26);border-bottom:1px solid #333c49;box-shadow:0 8px 24px -14px rgba(0,0,0,.75)}
 .top-inner{max-width:var(--maxw);margin:0 auto;padding:26px 22px;min-height:112px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:15px;min-width:0}
-.brand .mark{width:118px;height:42px;padding:7px 10px;flex:none;display:grid;place-items:center;border:1px solid rgba(255,255,255,.72);border-radius:10px;background:#f2f0e9;box-shadow:0 6px 18px -12px rgba(0,0,0,.8)}
+.brand .mark{width:132px;height:42px;padding:0;flex:none;display:grid;place-items:center;border:0;background:transparent}
 .brand .mark img{display:block;width:100%;height:100%;object-fit:contain}
 .brand .wm{display:flex;flex-direction:column;gap:6px;min-width:0;line-height:1}
 .brand .t{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.02em;color:var(--ink);line-height:1.05}
@@ -71,7 +71,7 @@ button{font-family:inherit}
 @media(max-width:700px){
   .top-inner{min-height:auto;padding:16px 18px;gap:14px}
   .brand{gap:12px}
-  .brand .mark{width:104px;height:36px;padding:6px 9px}
+  .brand .mark{width:112px;height:35px;padding:0}
   .brand .t{font-size:18px}
   .track{width:100%;margin-left:0;gap:6px}
   .seg{flex:1;width:auto}
@@ -256,7 +256,7 @@ body.is-final .anchor{border-left-color:var(--human)}
   .anchor .pos{margin-left:0;width:100%;padding-left:20px}
 }
 @media(max-width:420px){
-  .brand .mark{width:92px;height:32px;padding:5px 8px}
+  .brand .mark{width:98px;height:30px;padding:0}
   .brand .t{font-size:16px}
   .brand .k{font-size:9px;letter-spacing:.12em}
   .btn{padding:10px 13px;font-size:13px}
@@ -272,7 +272,7 @@ body.is-final .anchor{border-left-color:var(--human)}
   <div class="top-inner">
     <div class="brand">
       <span class="mark" aria-hidden="true">
-        <img src="tech-hall-logo.png" alt="">
+        <img src="tech-hall-logo-dark.png" alt="">
       </span>
       <span class="wm">
         <span class="t">Diagnóstico de fluxos agentes</span>
